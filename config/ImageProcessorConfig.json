@@ -1,0 +1,26 @@
+{
+    "ImageProcessor" : {
+        "image_processor_settings_method" : {
+            "department_map" : "./config/department_dictionary.xlsx",
+            "images_list"    : [
+                "C:/Users/user/Desktop/업무 파일/012.D2C 외주 자동화 PMO/250624 모니터링 예시 이미지/VD TV HR.png",
+                "C:/Users/user/Desktop/업무 파일/012.D2C 외주 자동화 PMO/250624 모니터링 예시 이미지/DA Bespoke AI.png",
+                "C:/Users/user/Desktop/업무 파일/012.D2C 외주 자동화 PMO/250624 모니터링 예시 이미지/VD Neo QLED 8K.png",
+                "C:/Users/user/Desktop/업무 파일/012.D2C 외주 자동화 PMO/250624 모니터링 예시 이미지/VD Smart Monitor PO_Local.png",
+                "C:/Users/user/Desktop/업무 파일/012.D2C 외주 자동화 PMO/250624 모니터링 예시 이미지/VD TV Flagship ('25 Launching).png",
+                "C:/Users/user/Desktop/업무 파일/012.D2C 외주 자동화 PMO/250624 모니터링 예시 이미지/VD TV HR_arab.png",
+                "C:/Users/user/Desktop/업무 파일/012.D2C 외주 자동화 PMO/250624 모니터링 예시 이미지/VD TV PO.png"
+            ],
+            "output_columns" : [
+                "conversion_date", 
+                "base_file_name", 
+                "compared_image", 
+                "base_department_name",
+                "compared_department_name",
+                "base_SSIM", 
+                "flipped_SSIM", 
+                "average_SSIM"
+            ]
+        }
+    }
+}
