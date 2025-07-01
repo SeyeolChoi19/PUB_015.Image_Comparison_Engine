@@ -2,11 +2,12 @@ import json
 
 import datetime as dt 
 import polars   as pl
-import numpy    as np 
 
-from skimage.metrics               import structural_similarity 
+from PIL import Image
+
 from misc_functions.misc_functions import calculate_image_proportions
-from misc_functions.misc_functions import convert_image_to_array
+from misc_functions.misc_functions import preprocess_image
+from misc_functions.misc_functions import calculate_multi_results
 
 class ImageProcessor:
     def __init__(self):
@@ -21,29 +22,27 @@ class ImageProcessor:
         self.output_data    = []
 
     def compare_images(self):
-        def comparison_process(base_image: str, image_file: str):
+        def comparison_process(base_image: str, image_file: str, base_width: int, base_height: int, base_image_object: Image):
             results_list = [self.current_date, base_image.replace("\\", "/").split("/")[-1], image_file.replace("\\", "/").split("/")[-1], "", "", None, None, None]
 
             try: 
-                converted_image = convert_image_to_array(image_file, self.base_width, self.base_height)
-                flipped_image   = convert_image_to_array(image_file, self.base_width, self.base_height, True)
-                base_score      = structural_similarity(self.base_image_object, converted_image)
-                flip_score      = structural_similarity(self.base_image_object, flipped_image)
-                average_score   = (base_score + flip_score) / 2
-                results_list    = [self.current_date, base_image.replace("\\", "/").split("/")[-1], image_file.replace("\\", "/").split("/")[-1], "", "", base_score, flip_score, average_score]
+                converted_image   = preprocess_image(image_file, base_width, base_height)
+                flipped_image     = preprocess_image(image_file, base_width, base_height, True)
+                algorithm_results = calculate_multi_results(base_image_object, converted_image, flipped_image, ["ssim", "hash"])
+                results_list      = [self.current_date, base_image.replace("\\", "/").split("/")[-1], image_file.replace("\\", "/").split("/")[-1], "", ""] + algorithm_results
             except Exception as E:
                 pass 
 
             return results_list           
 
         for base_image in self.images_list:
-            self.image_dimensions  = calculate_image_proportions(base_image)
-            self.base_width        = self.image_dimensions[0]
-            self.base_height       = self.image_dimensions[1]
-            self.base_image_object = convert_image_to_array(base_image, self.base_width, self.base_height)
+            image_dimensions  = calculate_image_proportions(base_image)
+            base_width        = image_dimensions[0]
+            base_height       = image_dimensions[1]
+            base_image_object = preprocess_image(base_image, base_width, base_height)
 
             for image_file in self.images_list:
-                results_list = comparison_process(base_image, image_file)
+                results_list = comparison_process(base_image, image_file, base_width, base_height, base_image_object)
                 self.output_data.append(results_list)
 
     def process_output_data(self):
@@ -59,12 +58,13 @@ class ImageProcessor:
 
         self.result_data = pl.DataFrame(self.output_data, schema = self.output_columns, orient = "row")
         self.result_data = self.result_data.filter(pl.col("base_file_name") != pl.col("compared_image"))
-        self.result_data = self.result_data.sort(by = ["base_file_name", "average_SSIM"], descending = True)
+        self.result_data = self.result_data.with_columns(((pl.col("average_phash").fill_null(0) + pl.col("average_SSIM")) / 2).alias("average_similarity"))
+        self.result_data = self.result_data.sort(by = ["base_file_name", "average_similarity"], descending = True)
 
         for (column_name, new_column_name) in zip(["base_file_name", "compared_image"], ["base_department_name", "compared_department_name"]):
             self.result_data = self.result_data.with_columns(pl.struct([column_name]).map_elements(lambda x: map_department_names(x[column_name]), return_dtype = pl.String).alias(new_column_name))
 
-        self.result_data.filter(pl.col("base_department_name") == pl.col("compared_department_name")).select(*self.output_columns).write_excel("2025-06-30 Image Processing Results.xlsx")
+        self.result_data.filter(pl.col("base_department_name") == pl.col("compared_department_name")).select(*self.output_columns + ["average_similarity"]).write_excel(f"{self.current_date} Image Processing Results.xlsx")
 
 if (__name__ == "__main__"):
     with open("./config/ImageProcessorConfig.json", "r", encoding = "utf-8") as f:
