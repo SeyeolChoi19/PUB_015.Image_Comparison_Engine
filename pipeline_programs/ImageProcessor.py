@@ -122,7 +122,7 @@ class ImageProcessor:
                 future_object       = executor.submit(multiprocessing_function, base_image_list, compared_image_list)
                 storage_list.append(future_object)
 
-        gen_ai_results   = pl.DataFrame([future.result() for future in storage_list], schema = ["base_file_name", "compared_image", "verdict", "reasoning"])                
+        gen_ai_results   = pl.DataFrame([future.result() for future in storage_list], schema = ["base_file_name", "compared_image", "verdict", "reasoning"], strict = False, orient = "row") 
         self.result_data = self.result_data.join(gen_ai_results, how = "left", on = ["base_file_name", "compared_image"])
 
 if (__name__ == "__main__"):
