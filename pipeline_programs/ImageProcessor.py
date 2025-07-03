@@ -50,8 +50,9 @@ class ImageProcessor:
             base_image_object = preprocess_image(base_image, base_width, base_height)
 
             for image_file in self.images_list:
-                results_list = comparison_process(base_image, image_file, base_width, base_height, base_image_object)
-                self.output_data.append(results_list)
+                if (base_image != image_file):
+                    results_list = comparison_process(base_image, image_file, base_width, base_height, base_image_object)
+                    self.output_data.append(results_list)
 
     def process_output_data(self):
         def map_department_names(file_name: str):
@@ -66,7 +67,6 @@ class ImageProcessor:
 
         def process_columns():
             result_data = pl.DataFrame(self.output_data, schema = self.output_columns, orient = "row")
-            result_data = result_data.filter(pl.col("base_file_name") != pl.col("compared_image"))
             result_data = result_data.with_columns(((pl.col("max_phash").fill_null(0) + pl.col("max_SSIM").fill_null(0)) / 2).alias("average_similarity"))
             result_data = result_data.sort(by = ["base_file_name", "average_similarity"], descending = True)
 
@@ -113,6 +113,14 @@ class ImageProcessor:
 
             return output_list
 
+        def get_futures_results(storage_list: list):
+            output_list = []
+
+            for future_object in storage_list:
+                output_list.extend(future_object.result())
+
+            return output_list
+
         data_list, storage_list = preprocess_for_multiprocessing(), []
 
         with ThreadPoolExecutor(max_workers = 4) as executor: 
@@ -122,9 +130,14 @@ class ImageProcessor:
                 future_object       = executor.submit(multiprocessing_function, base_image_list, compared_image_list)
                 storage_list.append(future_object)
 
-        gen_ai_results   = pl.DataFrame([future.result() for future in storage_list], schema = ["base_file_name", "compared_image", "verdict", "reasoning"], strict = False, orient = "row") 
+        gen_ai_results   = pl.DataFrame(get_futures_results(storage_list), schema = ["base_file_name", "compared_image", "verdict", "reasoning"], strict = False, orient = "row") 
         self.result_data = self.result_data.join(gen_ai_results, how = "left", on = ["base_file_name", "compared_image"])
 
+    def save_output_data(self):
+        self.result_data = self.result_data.with_columns(pl.col("base_file_name").str.split("/").list.last().alias("base_file_name"))
+        self.result_data = self.result_data.with_columns(pl.col("compared_image").str.split("/").list.last().alias("compared_image"))
+        self.result_data.write_excel(f"{self.current_date} Image Processing Results.xlsx")
+        
 if (__name__ == "__main__"):
     with open("./config/ImageProcessorConfig.json", "r", encoding = "utf-8") as f:
         config_dict = json.load(f)
@@ -133,4 +146,5 @@ if (__name__ == "__main__"):
     image_processor.image_processor_settings_method(**config_dict["ImageProcessor"]["image_processor_settings_method"])
     image_processor.compare_images()
     image_processor.process_output_data()
-    image_processor.apply_gen_ai()
+    image_processor.apply_gen_ai()  
+    image_processor.save_output_data()
