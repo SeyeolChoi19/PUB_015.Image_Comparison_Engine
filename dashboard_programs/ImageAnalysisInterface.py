@@ -25,7 +25,7 @@ class ImageAnalysisInterface:
         os.makedirs(f"./data/{self.current_date}/base_images", exist_ok = True)
         os.makedirs(f"./data/{self.current_date}/comparison_images", exist_ok = True)
 
-        if (len(os.listdir(f"./data")) > 10):
+        if (len(os.listdir(f"./data")) > 300):
             sub_list = sorted(os.listdir(f"./data"))
 
             for sub_folder in sub_list:
@@ -63,6 +63,7 @@ class ImageAnalysisInterface:
             if (uploaded_file is not None):
                 bytes_data = uploaded_file.read()
                 file_path  = f"./{(lambda x: 'config/prompts/' if (x == 'system_prompt_file') else 'config/' if (x == 'department_map') else '')(config_key)}{uploaded_file.name}"
+                streamlit_js_eval.streamlit_js_eval(js_expressions = "parent.window.location.reload()")
                 
                 with open(file_path, "wb") as output_file:
                     output_file.write(bytes_data)
@@ -87,10 +88,10 @@ class ImageAnalysisInterface:
                 image_analyzer.compare_images()
                 image_analyzer.process_output_data()
                 image_analyzer.apply_gen_ai()
-                image_analyzer.save_output_data()
+                image_analyzer.save_output_data(self.current_date)
 
-                with open(f"./output_files/{self.current_date[0:10]} Image Processing Results.xlsx", "rb") as f:
-                    self.layout_object.download_button(label = "결과 데이터 받기", data = f.read(), file_name = f"{self.current_date[0:10]} Image Processing Results.xlsx", mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                with open(f"./output_files/{self.current_date} Image Processing Results.xlsx", "rb") as f:
+                    self.layout_object.download_button(label = "결과 데이터 받기", data = f.read(), file_name = f"{self.current_date} Image Processing Results.xlsx", mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
             except Exception as E:
                 print(E)
@@ -107,6 +108,15 @@ class ImageAnalysisInterface:
                         backend_execution()
                 else:
                     self.layout_object.write("백엔드 작업이 실행 중입니다. 종료될 때까지 기다려 주세요")
+                
+    def __create_uploaders(self, base_uploader: List[streamlit.delta_generator.DeltaGenerator], comparison_uploader: List[streamlit.delta_generator.DeltaGenerator], map_uploader: List[streamlit.delta_generator.DeltaGenerator], prompt_uploader: List[streamlit.delta_generator.DeltaGenerator]):
+        config_keys    = ["base_images", "comparison_images", "department_map", "system_prompt_file"]
+        upload_labels  = ["베이스 이미지", "비교 이미지", "부서 매핑 파일", "분석 프롬프트"]
+        file_types     = ["zip", "zip", "xlsx", "txt"]
+        visual_objects = [base_uploader, comparison_uploader, map_uploader, prompt_uploader]
+        
+        for (config_key, upload_label, file_type, viz_object) in zip(config_keys, upload_labels, file_types, visual_objects):
+            self.__create_uploader(config_key, upload_label, file_type, viz_object)
                        
     def __base_page_layout(self):
         self.layout_object.set_page_config(page_title = self.page_title, layout = self.layout)
@@ -124,13 +134,7 @@ class ImageAnalysisInterface:
         map_uploader, prompt_uploader, execution_button = self.layout_object.columns(3)
         self.__toggle_gpt_model(gpt_toggle)
         self.__execute_program(execution_button)
-        config_keys    = ["base_images", "comparison_images", "department_map", "system_prompt_file"]
-        upload_labels  = ["베이스 이미지", "비교 이미지", "부서 매핑 파일", "분석 프롬프트"]
-        file_types     = ["zip", "zip", "xlsx", "txt"]
-        visual_objects = [base_uploader, comparison_uploader, map_uploader, prompt_uploader]
-        
-        for (config_key, upload_label, file_type, viz_object) in zip(config_keys, upload_labels, file_types, visual_objects):
-            self.__create_uploader(config_key, upload_label, file_type, viz_object)
+        self.__create_uploaders(base_uploader, comparison_uploader, map_uploader, prompt_uploader)
 
 if (__name__ == "__main__"):
     with open("./config/ImageAnalysisInterfaceConfig.json", "r", encoding = "utf-8") as f:
