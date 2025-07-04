@@ -127,10 +127,10 @@ class ImageProcessor:
         gen_ai_results   = pl.DataFrame(get_futures_results(storage_list), schema = ["base_file_name", "compared_image", "verdict", "reasoning"], strict = False, orient = "row") 
         self.result_data = self.result_data.join(gen_ai_results, how = "left", on = ["base_file_name", "compared_image"])
 
-    def save_output_data(self):
+    def save_output_data(self, output_date: str):
         self.result_data = self.result_data.with_columns(pl.col("base_file_name").str.split("/").list.last().alias("base_file_name"))
         self.result_data = self.result_data.with_columns(pl.col("compared_image").str.split("/").list.last().alias("compared_image"))
-        self.result_data.write_excel(f"output_files/{self.current_date} Image Processing Results.xlsx")
+        self.result_data.write_excel(f"output_files/{output_date} Image Processing Results.xlsx")
 
 if (__name__ == "__main__"):
     with open("./config/ImageProcessorConfig.json", "r", encoding = "utf-8") as f:
