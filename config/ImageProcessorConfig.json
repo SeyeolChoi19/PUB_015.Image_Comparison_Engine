@@ -1,26 +1,35 @@
 {
-    "ImageProcessor" : {
-        "image_processor_settings_method" : {
-            "department_map"     : "./config/department_dictionary.xlsx",
-            "system_prompt_file" : "./config/prompts/system_prompt.txt",
-            "user_prompt_file"   : "./config/prompts/user_prompt.txt",
-            "gpt_model_name"     : "gpt-4.1",
-            "images_list"        : [
-                
+    "ImageProcessor": {
+        "image_processor_settings_method": {
+            "department_map": "./config/department_dictionary 2.xlsx",
+            "system_prompt_file": "./config/prompts/system_prompt copy.txt",
+            "user_prompt_file": "./config/prompts/user_prompt.txt",
+            "gpt_model_name": "gpt-4o",
+            "base_images": [
+        
             ],
-            "output_columns" : [
-                "conversion_date", 
-                "base_file_name", 
-                "compared_image", 
+            "comparison_images": [
+            
+            ],
+            "output_columns": [
+                "conversion_date",
+                "base_file_name",
+                "compared_image",
                 "base_department_name",
                 "compared_department_name",
-                "base_SSIM", 
-                "flipped_SSIM", 
+                "base_SSIM",
+                "flipped_SSIM",
                 "max_SSIM",
                 "base_phash",
                 "flipped_phash",
                 "max_phash"
-            ]
+            ],
+            "threshold_dict": {
+                "very likely match": 0.75,
+                "possible match": 0.5,
+                "unlikely match": 0.25,
+                "no match": 0
+            }
         }
     }
 }
