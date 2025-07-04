@@ -6,6 +6,21 @@ from PIL import Image
 
 from skimage.metrics import structural_similarity
 
+def lock_file_ops(operation_flag: str = "running"):
+    if (operation_flag == "running"):
+        with open("./config/job.lock", "w") as f:
+            f.write("running")
+    else:
+        if (os.path.exists("./config/job.lock")):
+            os.remove("./config/job.lock")
+
+def json_processor(file_name: str, operation_type: str = "r", config_dict: dict = None):
+    with open(file_name, operation_type, encoding = "utf-8") as f:
+        if (operation_type.lower() == "r"):
+             return json.load(f)
+        elif (operation_type.lower() == "w"):
+            json.dump(config_dict, f, indent = 4)            
+
 def text_file_processor(file_name: str, operation_type: str = "r", output_string: str = None):
     with open(file_name, operation_type, encoding = "utf-8") as f:
         if (operation_type.lower() == "r"):
@@ -53,9 +68,10 @@ def analyze_images(model_type: str, system_prompt: str, user_prompt: str, base_i
         return [verdict, reasoning] 
     
     except Exception as E:
+        print(E)
         if (depth_number < 3):
             depth_number += 1
-            analyze_images(model_type, system_prompt, user_prompt, base_image, comparison_image, api_client, depth_number)
+            return analyze_images(model_type, system_prompt, user_prompt, base_image, comparison_image, api_client, depth_number)
         else:
             return [None, None]
 
@@ -78,3 +94,5 @@ def calculate_multi_results(base_image_object: Image, compared_image_object: Ima
                 output_results.extend([None, None, None])
 
     return output_results
+
+
