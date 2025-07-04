@@ -3,8 +3,7 @@ import json, openai, os
 import datetime as dt 
 import polars   as pl
 
-from PIL       import Image
-from threading import Lock
+from PIL import Image
 
 from concurrent.futures            import ThreadPoolExecutor
 from misc_functions.misc_functions import calculate_image_proportions
@@ -17,17 +16,19 @@ class ImageProcessor:
     def __init__(self):
         self.current_date = str(dt.datetime.now().date())
 
-    def image_processor_settings_method(self, department_map: str, system_prompt_file: str, user_prompt_file: str, gpt_model_name: str, images_list: list[str], output_columns: list[str]):
-        self.department_map = pl.read_excel(department_map).sort(by = ["product_keywords"], descending = True)
-        self.system_prompt  = text_file_processor(system_prompt_file, "r")
-        self.user_prompt    = text_file_processor(user_prompt_file, "r")
-        self.gpt_model_name = gpt_model_name
-        self.department_map = self.department_map.with_columns(pl.col("product_keywords").str.len_chars().alias("key_length"))
-        self.department_map = self.department_map.sort(by = ["key_length", "product_keywords"], descending = [True, False])
-        self.images_list    = images_list 
-        self.gpt_api_object = openai.OpenAI(api_key = os.getenv("GPT_API_KEY"))
-        self.output_columns = output_columns
-        self.output_data    = []
+    def image_processor_settings_method(self, department_map: str, system_prompt_file: str, user_prompt_file: str, gpt_model_name: str, base_images: list[str], comparison_images: list[str], output_columns: list[str], threshold_dict: dict):
+        self.department_map    = pl.read_excel(department_map).sort(by = ["product_keywords"], descending = True)
+        self.system_prompt     = text_file_processor(system_prompt_file, "r")
+        self.user_prompt       = text_file_processor(user_prompt_file, "r")
+        self.gpt_model_name    = gpt_model_name
+        self.base_images       = base_images
+        self.comparison_images = comparison_images 
+        self.output_columns    = output_columns
+        self.threshold_dict    = threshold_dict
+        self.department_map    = self.department_map.with_columns(pl.col("product_keywords").str.len_chars().alias("key_length"))
+        self.department_map    = self.department_map.sort(by = ["key_length", "product_keywords"], descending = [True, False])
+        self.gpt_api_object    = openai.OpenAI(api_key = os.getenv("GPT_API_KEY"))
+        self.output_data       = []
 
     def compare_images(self):
         def comparison_process(base_image: str, image_file: str, base_width: int, base_height: int, base_image_object: Image):
@@ -43,20 +44,20 @@ class ImageProcessor:
 
             return results_list           
 
-        for base_image in self.images_list:
+        for base_image in self.base_images:
             image_dimensions  = calculate_image_proportions(base_image)
             base_width        = image_dimensions[0]
             base_height       = image_dimensions[1]
             base_image_object = preprocess_image(base_image, base_width, base_height)
 
-            for image_file in self.images_list:
+            for image_file in self.comparison_images:
                 if (base_image != image_file):
                     results_list = comparison_process(base_image, image_file, base_width, base_height, base_image_object)
                     self.output_data.append(results_list)
 
     def process_output_data(self):
         def map_department_names(file_name: str):
-            output_value = ""
+            output_value = "default"
 
             for (department_name, keyword) in zip(self.department_map["department_name"].to_list(), self.department_map["product_keywords"].to_list()):
                 if (keyword.lower() in file_name.lower()):
@@ -76,14 +77,7 @@ class ImageProcessor:
             return result_data
 
         def apply_thresholds(similarity_value: float):
-            threshold_dict = {
-                "very likely match" : 0.75, 
-                "possible match"    : 0.5, 
-                "unlikely match"    : 0.25, 
-                "no match"          : 0
-            }
-
-            for (label, threshold) in threshold_dict.items():
+            for (label, threshold) in self.threshold_dict.items():
                 if (threshold + 0.25 >= similarity_value > threshold):
                     output_value = label
                     break 
@@ -136,8 +130,8 @@ class ImageProcessor:
     def save_output_data(self):
         self.result_data = self.result_data.with_columns(pl.col("base_file_name").str.split("/").list.last().alias("base_file_name"))
         self.result_data = self.result_data.with_columns(pl.col("compared_image").str.split("/").list.last().alias("compared_image"))
-        self.result_data.write_excel(f"{self.current_date} Image Processing Results.xlsx")
-        
+        self.result_data.write_excel(f"output_files/{self.current_date} Image Processing Results.xlsx")
+
 if (__name__ == "__main__"):
     with open("./config/ImageProcessorConfig.json", "r", encoding = "utf-8") as f:
         config_dict = json.load(f)
