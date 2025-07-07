@@ -53,6 +53,7 @@ class ImageAnalysisInterface:
             shutil.unpack_archive(file_path, f"./data/{self.current_date}/{config_key}", "zip")
             files_list = [f"./data/{self.current_date}/{config_key}/{file_name}" for file_name in os.listdir(f"./data/{self.current_date}/{config_key}")]
             self.image_processor_config_dict["ImageProcessor"]["image_processor_settings_method"][config_key] = files_list
+            os.remove(file_path)
         
         json_processor(self.image_processor_config_file, "w", self.image_processor_config_dict)
         
@@ -62,7 +63,7 @@ class ImageAnalysisInterface:
 
             if (uploaded_file is not None):
                 bytes_data = uploaded_file.read()
-                file_path  = f"./{(lambda x: 'config/prompts/' if (x == 'system_prompt_file') else 'config/' if (x == 'department_map') else '')(config_key)}{uploaded_file.name}"
+                file_path  = f"./{(lambda x: 'config/prompts/' if (x == 'system_prompt_file') else 'config/mapping_dictionaries/' if (x == 'department_map') else '')(config_key)}{uploaded_file.name}"
                 streamlit_js_eval.streamlit_js_eval(js_expressions = "parent.window.location.reload()")
                 
                 with open(file_path, "wb") as output_file:
