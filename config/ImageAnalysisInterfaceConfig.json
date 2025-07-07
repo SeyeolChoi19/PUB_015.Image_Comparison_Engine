@@ -9,5 +9,14 @@
             "image_processor_config" : "./config/ImageProcessorConfig.json",
             "model_options"          : ["gpt-4o (Input 가격: $2.50, Output 가격: $10.00)", "gpt-4o-mini (Input 가격: $0.15, Output 가격: $0.60)", "gpt-4.1 (Input 가격: $2.00, Output 가격: $8.00)", "gpt-4.1-mini (Input 가격: $0.40, Output 가격: $1.60)", "gpt-4.1-nano (Input 가격: $0.10, Output 가격: $0.40)"]
         }
+    },
+    "GetPreviousFiles" : {
+        "constructor" : {
+            "page_title": "파일 다운로드 페이지",
+            "layout": "wide"
+        },
+        "get_previous_files_settings_method": {
+            "dashboard_title": "파일 다운로드 페이지"
+        }
     }
 }
