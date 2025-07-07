@@ -1,15 +1,13 @@
 {
     "ImageProcessor": {
         "image_processor_settings_method": {
-            "department_map": "./config/department_dictionary 2.xlsx",
-            "system_prompt_file": "./config/prompts/system_prompt copy.txt",
-            "user_prompt_file": "./config/prompts/user_prompt.txt",
+            "department_map": "./config/mapping_dictionaries/department_dictionary 2.xlsx",
+            "system_prompt_file": "./config/prompts/system_prompt.txt",
+            "user_prompt_file": "./config/user_prompt.txt",
             "gpt_model_name": "gpt-4o",
             "base_images": [
-        
             ],
             "comparison_images": [
-            
             ],
             "output_columns": [
                 "conversion_date",
