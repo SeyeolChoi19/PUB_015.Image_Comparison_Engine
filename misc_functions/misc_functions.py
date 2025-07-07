@@ -94,5 +94,3 @@ def calculate_multi_results(base_image_object: Image, compared_image_object: Ima
                 output_results.extend([None, None, None])
 
     return output_results
-
-
