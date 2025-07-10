@@ -1,0 +1,14 @@
+{
+    "ImageDownloader": {
+        "image_downloader_settings_method": {
+            "input_file": "C:/Users/user/Desktop/업무 파일/012.D2C 외주 자동화 PMO/samsung_sites_images_2025-07-09_changed.xlsx",
+            "site_code_column": "Site Code",
+            "tab_label_column": "Indicator/Tab Label",
+            "image_urls_column": "Image Source",
+            "filter_dictionary": {
+                "Section": ["0", "1", "2", "3"],
+                "Slide/Tab Index": ["1"]
+            }
+        }
+    }
+}
