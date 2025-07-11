@@ -18,5 +18,15 @@
         "get_previous_files_settings_method": {
             "dashboard_title": "파일 다운로드 페이지"
         }
+    },
+    "ImageDownloadingInterface" : {
+        "constructor" : {
+            "page_title": "이미지 다운로드 인터페이스",
+            "layout": "wide"
+        },
+        "image_downloading_interface_settings_method" : {
+            "dashboard_title": "이미지 다운로드 인터페이스",
+            "image_downloader_file": "./config/ImageDownloaderConfig.json"
+        }
     }
 }
