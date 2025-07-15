@@ -3,8 +3,9 @@ import os, json, requests, logging, shutil, unicodedata, re
 import datetime as dt 
 import polars   as pl 
 
-from exceptions.exceptions import download_ops_decorator
-from exceptions.exceptions import operation_indicator
+from exceptions.exceptions         import download_ops_decorator
+from exceptions.exceptions         import operation_indicator
+from misc_functions.misc_functions import lock_file_ops
 
 class ImageDownloader:
     def __init__(self):
@@ -47,11 +48,10 @@ class ImageDownloader:
        
     @operation_indicator("Packaging image files")
     def package_data(self):
-        output_file_name = f"./{self.current_date} Image Files.zip"
-        shutil.make_archive(output_file_name[:-4], "zip", self.output_image_path)
+        self.output_file_name = f"./output_images/{str(dt.datetime.now())[0:19].replace(':', '')} Image Files.zip"
+        shutil.make_archive(self.output_file_name[:-4], "zip", self.output_image_path)
         shutil.rmtree(self.output_image_path)
-
-        return output_file_name
+        lock_file_ops("remove")
 
 if (__name__ == "__main__"):
     with open("./config/ImageDownloaderConfig.json", "r", encoding = "utf-8") as f:
@@ -60,4 +60,4 @@ if (__name__ == "__main__"):
     image_downloader = ImageDownloader()
     image_downloader.image_downloader_settings_method(**config_dict["ImageDownloader"]["image_downloader_settings_method"])
     image_downloader.download_images()
-    image_downloader.package_data()
+    image_downloader.package_data()    
