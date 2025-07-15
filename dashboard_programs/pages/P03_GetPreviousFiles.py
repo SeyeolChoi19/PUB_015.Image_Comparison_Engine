@@ -26,8 +26,9 @@ class GetPreviousFiles:
         result_files_table    = self.__create_files_table("./output_files")
         prompt_files_table    = self.__create_files_table("./config/prompts")
         category_dictionaries = self.__create_files_table("./config/mapping_dictionaries")
+        image_zip_files       = self.__create_files_table("./output_images")
 
-        for (visualization_object, dataframe, file_type) in zip(visualization_objects, [result_files_table, prompt_files_table, category_dictionaries], ["#### 결과 파일", "#### 프롬프트 파일", "#### 카테고리 딕셔너리"]): 
+        for (visualization_object, dataframe, file_type) in zip(visualization_objects, [result_files_table, prompt_files_table, category_dictionaries, image_zip_files], ["#### 결과 파일", "#### 프롬프트 파일", "#### 카테고리 딕셔너리", "#### 결과 이미지"]): 
             with visualization_object:
                 self.layout_object.markdown(file_type)
                 self.layout_object.dataframe(dataframe, height = 388, hide_index = True)
@@ -60,7 +61,7 @@ class GetPreviousFiles:
     
     def show_page_contents(self):
         self.__base_page_layout()
-        table_list = self.layout_object.columns(3)
+        table_list = self.layout_object.columns(4)
         self.__display_files_tables(table_list)
         self.__file_download_module()
 
